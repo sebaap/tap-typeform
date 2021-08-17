@@ -6,6 +6,7 @@ import pendulum
 import singer
 from singer.bookmarks import write_bookmark, reset_stream
 from backoff import on_exception, expo, constant
+from tap_typeform.http import TypeformNotFoundError, TypeformUnauthorizedError
 
 
 LOGGER = singer.get_logger()
@@ -230,85 +231,89 @@ def sync_forms(atx):
     incremental_range = atx.config.get('incremental_range')
 
     for form_id in atx.config.get('forms').split(','):
-        bookmark = atx.state.get('bookmarks', {}).get(form_id, {})
+        try:
+            bookmark = atx.state.get('bookmarks', {}).get(form_id, {})
 
-        LOGGER.info('form: {} '.format(form_id))
+            LOGGER.info('form: {} '.format(form_id))
 
-        # pull back the form question details
-        if 'questions'in atx.selected_stream_ids:
-            sync_form_definition(atx, form_id)
+            # pull back the form question details
+            if 'questions'in atx.selected_stream_ids:
+                sync_form_definition(atx, form_id)
 
-        should_sync_forms = False
-        for stream_name in FORM_STREAMS:
-            should_sync_forms = should_sync_forms or (stream_name in atx.selected_stream_ids)
-        if not should_sync_forms:
-            continue
+            should_sync_forms = False
+            for stream_name in FORM_STREAMS:
+                should_sync_forms = should_sync_forms or (stream_name in atx.selected_stream_ids)
+            if not should_sync_forms:
+                continue
 
-        # start_date is defaulted in the config file 2018-01-01
-        # if there's no default date and it gets set to now, then start_date will have to be
-        #   set to the prior business day/hour before we can use it.
+            # start_date is defaulted in the config file 2018-01-01
+            # if there's no default date and it gets set to now, then start_date will have to be
+            #   set to the prior business day/hour before we can use it.
 
-        now = datetime.datetime.now()
-        if incremental_range == "daily":
-            s_d = now.replace(hour=0, minute=0, second=0, microsecond=0)
-            start_date = pendulum.parse(atx.config.get('start_date', s_d + datetime.timedelta(days=-1, hours=0)))
-        elif incremental_range == "hourly":
-            s_d = now.replace(minute=0, second=0, microsecond=0)
-            start_date = pendulum.parse(atx.config.get('start_date', s_d + datetime.timedelta(days=0, hours=-1)))
-        LOGGER.info('start_date: {} '.format(start_date))
-
-
-        # end date is not usually specified in the config file by default so end_date is now.
-        # if end date is now, we will have to truncate them
-        # to the nearest day/hour before we can use it.
-        if incremental_range == "daily":
-            e_d = now.replace(hour=0, minute=0, second=0, microsecond=0).strftime("%Y-%m-%d %H:%M:%S")
-            end_date = pendulum.parse(atx.config.get('end_date', e_d))
-        elif incremental_range == "hourly":
-            e_d = now.replace(minute=0, second=0, microsecond=0).strftime("%Y-%m-%d %H:%M:%S")
-            end_date = pendulum.parse(atx.config.get('end_date', e_d))
-        LOGGER.info('end_date: {} '.format(end_date))
-
-        # if the state file has a date_to_resume, we use it as it is.
-        # if it doesn't exist, we overwrite by start date
-        s_d = start_date.strftime("%Y-%m-%d %H:%M:%S")
-        last_date = pendulum.parse(bookmark.get('date_to_resume', s_d))
-        LOGGER.info('last_date: {} '.format(last_date))
-
-
-        # no real reason to assign this other than the naming
-        # makes better sense once we go into the loop
-        current_date = last_date
-
-        while current_date <= end_date:
+            now = datetime.datetime.now()
             if incremental_range == "daily":
-                next_date = current_date + datetime.timedelta(days=1, hours=0)
+                s_d = now.replace(hour=0, minute=0, second=0, microsecond=0)
+                start_date = pendulum.parse(atx.config.get('start_date', s_d + datetime.timedelta(days=-1, hours=0)))
             elif incremental_range == "hourly":
-                next_date = current_date + datetime.timedelta(days=0, hours=1)
+                s_d = now.replace(minute=0, second=0, microsecond=0)
+                start_date = pendulum.parse(atx.config.get('start_date', s_d + datetime.timedelta(days=0, hours=-1)))
+            LOGGER.info('start_date: {} '.format(start_date))
 
-            ut_current_date = int(current_date.timestamp())
-            LOGGER.info('ut_current_date: {} '.format(ut_current_date))
-            ut_next_date = int(next_date.timestamp())
-            LOGGER.info('ut_next_date: {} '.format(ut_next_date))
-            [responses, max_submitted_at] = sync_form(atx, form_id, ut_current_date, ut_next_date)
-            # if the max responses were returned, we have to make the call again
-            # going to increment the max_submitted_at by 1 second so we don't get dupes,
-            # but this also might cause some minor loss of data.
-            # there's no ideal scenario here since the API has no other way than using
-            # time ranges to step through data.
-            while responses == 1000:
-                interim_next_date = pendulum.parse(max_submitted_at) + datetime.timedelta(seconds=1)
-                ut_interim_next_date = int(interim_next_date.timestamp())
-                write_forms_state(atx, form_id, interim_next_date)
-                [responses, max_submitted_at] = sync_form(atx, form_id, ut_interim_next_date, ut_next_date)
 
-            # if the prior sync is successful it will write the date_to_resume bookmark
-            write_forms_state(atx, form_id, next_date)
-            current_date = next_date
+            # end date is not usually specified in the config file by default so end_date is now.
+            # if end date is now, we will have to truncate them
+            # to the nearest day/hour before we can use it.
+            if incremental_range == "daily":
+                e_d = now.replace(hour=0, minute=0, second=0, microsecond=0).strftime("%Y-%m-%d %H:%M:%S")
+                end_date = pendulum.parse(atx.config.get('end_date', e_d))
+            elif incremental_range == "hourly":
+                e_d = now.replace(minute=0, second=0, microsecond=0).strftime("%Y-%m-%d %H:%M:%S")
+                end_date = pendulum.parse(atx.config.get('end_date', e_d))
+            LOGGER.info('end_date: {} '.format(end_date))
 
-        reset_stream(atx.state, 'questions')
-        reset_stream(atx.state, 'landings')
-        reset_stream(atx.state, 'answers')
+            # if the state file has a date_to_resume, we use it as it is.
+            # if it doesn't exist, we overwrite by start date
+            s_d = start_date.strftime("%Y-%m-%d %H:%M:%S")
+            last_date = pendulum.parse(bookmark.get('date_to_resume', s_d))
+            LOGGER.info('last_date: {} '.format(last_date))
+
+
+            # no real reason to assign this other than the naming
+            # makes better sense once we go into the loop
+            current_date = last_date
+
+            while current_date <= end_date:
+                if incremental_range == "daily":
+                    next_date = current_date + datetime.timedelta(days=1, hours=0)
+                elif incremental_range == "hourly":
+                    next_date = current_date + datetime.timedelta(days=0, hours=1)
+
+                ut_current_date = int(current_date.timestamp())
+                LOGGER.info('ut_current_date: {} '.format(ut_current_date))
+                ut_next_date = int(next_date.timestamp())
+                LOGGER.info('ut_next_date: {} '.format(ut_next_date))
+                [responses, max_submitted_at] = sync_form(atx, form_id, ut_current_date, ut_next_date)
+                # if the max responses were returned, we have to make the call again
+                # going to increment the max_submitted_at by 1 second so we don't get dupes,
+                # but this also might cause some minor loss of data.
+                # there's no ideal scenario here since the API has no other way than using
+                # time ranges to step through data.
+                while responses == 1000:
+                    interim_next_date = pendulum.parse(max_submitted_at) + datetime.timedelta(seconds=1)
+                    ut_interim_next_date = int(interim_next_date.timestamp())
+                    write_forms_state(atx, form_id, interim_next_date)
+                    [responses, max_submitted_at] = sync_form(atx, form_id, ut_interim_next_date, ut_next_date)
+
+                # if the prior sync is successful it will write the date_to_resume bookmark
+                write_forms_state(atx, form_id, next_date)
+                current_date = next_date
+
+            reset_stream(atx.state, 'questions')
+            reset_stream(atx.state, 'landings')
+            reset_stream(atx.state, 'answers')
+        except (TypeformUnauthorizedError, TypeformNotFoundError):
+            LOGGER.warning(f"Unable to get data for form {form_id}")
+            continue
 
     if 'forms'in atx.selected_stream_ids:
         state = sync_latest_forms(atx)
