@@ -250,7 +250,7 @@ def sync_forms(atx):
             # if there's no default date and it gets set to now, then start_date will have to be
             #   set to the prior business day/hour before we can use it.
 
-            now = datetime.datetime.now()
+            now = datetime.datetime.now(tz=datetime.timezone.utc)
             if incremental_range == "daily":
                 s_d = now.replace(hour=0, minute=0, second=0, microsecond=0)
                 start_date = pendulum.parse(atx.config.get('start_date', s_d + datetime.timedelta(days=-1, hours=0)))
@@ -267,7 +267,9 @@ def sync_forms(atx):
                 e_d = now.replace(hour=0, minute=0, second=0, microsecond=0).strftime("%Y-%m-%d %H:%M:%S")
                 end_date = pendulum.parse(atx.config.get('end_date', e_d))
             elif incremental_range == "hourly":
-                e_d = now.replace(minute=0, second=0, microsecond=0).strftime("%Y-%m-%d %H:%M:%S")
+                e_d = (
+                    now.replace(minute=0, second=0, microsecond=0) + datetime.timedelta(days=0, hours=-1)
+                ).strftime("%Y-%m-%d %H:%M:%S")
                 end_date = pendulum.parse(atx.config.get('end_date', e_d))
             LOGGER.info('end_date: {} '.format(end_date))
 
