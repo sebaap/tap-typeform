@@ -3,22 +3,152 @@
     "selected": true,
     "additionalProperties": false,
     "properties": {
-	"form_id": {
-	    "type": ["null", "string"],
-	    "selected": true
-	},
-	"question_id": {
-	    "type": ["null", "string"],
-	    "selected": true
-	},
-      	"title": {
-            "type": ["null", "string"],
-	    "selected": true
-	},
-      	"ref": {
-            "type": ["null", "string"],
-	    "selected": true
-	}
+		"id": {
+			"type": ["null", "string"],
+			"selected": true
+		},
+		"form_id": {
+			"type": ["null", "string"],
+			"selected": true
+		},
+		"question_id": {
+			"type": ["null", "string"],
+			"selected": true
+		},
+		"title": {
+			"type": ["null", "string"],
+			"selected": true
+		},
+		"ref": {
+			"type": ["null", "string"],
+			"selected": true
+		},
+		"type": {
+			"type": ["null", "string"],
+			"selected": true
+		},
+		"validations": {
+			"type": ["null", "object"],
+			"selected": true,
+			"additionalProperties": false,
+			"properties": {
+				"required": {
+					"type": ["null", "boolean"]
+				}
+			}
+		},
+		"attachment": {
+			"type": ["null", "object"],
+			"additionalProperties": false,
+			"properties": {
+				"href": {
+					"type": ["null", "string"]
+				},
+				"type": {
+					"type": ["null", "string"]
+				}
+			}
+		},
+		"layout": {
+			"type": ["null", "object"],
+			"selected": true,
+			"properties": {
+				"type": {
+					"type": ["null", "string"]
+				},
+				"attachment": {
+					"type": ["null", "object"],
+					"properties": {
+						"type": {
+							"type": ["null", "string"]
+						},
+						"href": {
+							"type": ["null", "string"]
+						},
+						"properties": {
+							"type": ["null", "object"],
+							"properties": {
+								"brightness": {
+									"type": ["null", "number"]
+								},
+								"focal_point": {
+									"type": ["null", "object"],
+									"properties": {
+										"x": {
+											"type": ["null", "number"]
+										},
+										"y": {
+											"type": ["null", "number"]
+										}
+									}
+								}
+							}
+						}
+					}
+				}
+			}
+		},
+		"properties": {
+			"type": ["null", "object"],
+			"selected": true,
+			"additionalProperties": false,
+			"properties": {
+				"description": {
+					"type": ["null", "string"]
+				},
+				"randomize": {
+					"type": ["null", "boolean"]
+				},
+				"allow_multiple_selection": {
+					"type": ["null", "boolean"]
+				},
+				"allow_other_choice": {
+					"type": ["null", "boolean"]
+				},
+				"vertical_alignment": {
+					"type": ["null", "boolean"]
+				},
+				"choices": {
+					"type": ["null", "array"],
+					"items": {
+						"type": "object",
+						"properties": {
+							"id": {
+								"type": ["null", "string"]
+							},
+							"ref": {
+								"type": ["null", "string"]
+							},
+							"label": {
+								"type": ["null", "string"]
+							}
+						}
+					}
+				},
+				"steps": {
+					"type": ["null", "integer"]
+				},
+				"shape": {
+					"type": ["null", "string"]
+				},
+				"labels": {
+					"type": ["null", "object"],
+					"selected": true,
+					"additionalProperties": false,
+					"properties": {
+						"left": {
+							"type": ["null", "string"]
+						},
+						"right": {
+							"type": ["null", "string"]
+						}
+					}
+				},
+				"start_at_one": {
+					"type": ["null", "boolean"]
+				}
+			}
+		}
     },
     "key_properties": ["form_id","question_id"]
 }
