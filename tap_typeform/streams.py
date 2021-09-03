@@ -97,19 +97,7 @@ def sync_form_definition(atx, form_id):
             else:
                 time.sleep(METRIC_JOB_POLL_SLEEP)
 
-    definition_data_rows = []
-
-    # we only care about a few fields in the form definition
-    # just those that give an analyst a reference to the submissions
-    for row in data:
-        definition_data_rows.append({
-            "form_id": form_id,
-            "question_id": row['id'],
-            "title": row['title'],
-            "ref": row['ref']
-            })
-
-    write_records(atx, 'questions', definition_data_rows)
+    write_records(atx, 'questions', [{"form_id": form_id, **row} for row in data])
 
 
 def sync_form(atx, form_id, start_date, end_date):
