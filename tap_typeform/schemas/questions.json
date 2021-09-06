@@ -1,7 +1,6 @@
 {
     "type": ["null", "object"],
     "selected": true,
-    "additionalProperties": false,
     "properties": {
 		"id": {
 			"type": ["null", "string"],
@@ -30,7 +29,7 @@
 		"validations": {
 			"type": ["null", "object"],
 			"selected": true,
-			"additionalProperties": false,
+			"additionalProperties": true,
 			"properties": {
 				"required": {
 					"type": ["null", "boolean"]
@@ -39,7 +38,7 @@
 		},
 		"attachment": {
 			"type": ["null", "object"],
-			"additionalProperties": false,
+			"additionalProperties": true,
 			"properties": {
 				"href": {
 					"type": ["null", "string"]
@@ -52,12 +51,14 @@
 		"layout": {
 			"type": ["null", "object"],
 			"selected": true,
+			"additionalProperties": true,
 			"properties": {
 				"type": {
 					"type": ["null", "string"]
 				},
 				"attachment": {
 					"type": ["null", "object"],
+					"additionalProperties": true,
 					"properties": {
 						"type": {
 							"type": ["null", "string"]
@@ -67,12 +68,14 @@
 						},
 						"properties": {
 							"type": ["null", "object"],
+							"additionalProperties": true,
 							"properties": {
 								"brightness": {
 									"type": ["null", "number"]
 								},
 								"focal_point": {
 									"type": ["null", "object"],
+									"additionalProperties": true,
 									"properties": {
 										"x": {
 											"type": ["null", "number"]
@@ -91,7 +94,7 @@
 		"properties": {
 			"type": ["null", "object"],
 			"selected": true,
-			"additionalProperties": false,
+			"additionalProperties": true,
 			"properties": {
 				"description": {
 					"type": ["null", "string"]
@@ -112,6 +115,7 @@
 					"type": ["null", "array"],
 					"items": {
 						"type": "object",
+						"additionalProperties": true,
 						"properties": {
 							"id": {
 								"type": ["null", "string"]
@@ -133,8 +137,7 @@
 				},
 				"labels": {
 					"type": ["null", "object"],
-					"selected": true,
-					"additionalProperties": false,
+					"additionalProperties": true,
 					"properties": {
 						"left": {
 							"type": ["null", "string"]
